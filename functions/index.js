@@ -3,16 +3,17 @@ const admin = require('firebase-admin');
 admin.initializeApp(functions.config().firebase);
 
 exports.shorten = functions.https.onRequest((request, response) => {
+
   var url = request.query.url;
   if (!url) {
-    response.json({ 'reason': 'no URL specified' });
+    response.json({ 'status': 'failure', 'reason': 'no URL specified' });
     return;
   }
 
   var pattern = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
   var isValidUrl = String(url).match(pattern);
   if (!isValidUrl) {
-    response.json({ 'reason': 'invalid URL format' });
+    response.json({ 'status': 'failure', 'reason': 'invalid URL format' });
     return;
   }
 
@@ -25,12 +26,12 @@ exports.shorten = functions.https.onRequest((request, response) => {
     var result = snapshot.val();
     if (!result) {
       let id = nanoid();
-      admin.database().ref('links').push({ 'url': url });
-      response.send('added');
+      var key = admin.database().ref('links').push({ 'url': url }).key;
+      response.json({ 'status': 'success', 'id': key });
       return;
     }
     for (var r in result) {
-      response.send(r);
+      response.json({ 'status': 'success', 'id': r })
       return;
     }
   });
@@ -38,12 +39,21 @@ exports.shorten = functions.https.onRequest((request, response) => {
 
 exports.lengthen = functions.https.onRequest((request, response) => {
   var id = request.query.id;
+  if (!id) {
+    response.json({ 'status': 'failure', 'reason': 'no ID specified' });
+    return;
+  }
+
   const db = admin.database();
   var ref = db.ref('links/' + id);
   ref.once('value').then(function(snapshot) {
-    response.send(snapshot.val().url);
+    var val = snapshot.val();
+    if (val) {
+      response.json({ 'status': 'success', 'url': val.url });
+    } else {
+      response.json({ 'status': 'failure', 'reason': 'invalid ID' });
+    }
   });
-  return;
 });
 
 exports.redirect = functions.https.onRequest((request, response) => {
@@ -53,5 +63,4 @@ exports.redirect = functions.https.onRequest((request, response) => {
     var result = snapshot.val();
     response.redirect(301, result.url);
   });
-  return;
 });
