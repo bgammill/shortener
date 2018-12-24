@@ -51,7 +51,6 @@ exports.redirect = functions.https.onRequest((request, response) => {
   const db = admin.database();
   db.ref('links/' + id).once('value').then(function(snapshot) {
     var result = snapshot.val();
-    console.log(result);
     response.redirect(301, result.url);
   });
   return;
