@@ -14,7 +14,7 @@ shorten?url=https://github.com
 ```
 **output**
 ```
--LUT14pGL1pRscnvJGX_
+{"status": "success", "id": "-LUT14pGL1pRscnvJGX_"}
 ```
 
 ### lengthen
@@ -27,7 +27,7 @@ lengthen?id=-LUT14pGL1pRscnvJGX_
 ```
 **output**
 ```
-https://github.com
+{"status": "success", "url": "https://github.com"}
 ```
 
 ### redirect
